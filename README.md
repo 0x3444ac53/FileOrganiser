@@ -80,8 +80,8 @@ def make_mover(folder, rules):
 ```
 
 ### Todo
-- [] Add proper command line options
-- [] Add some more modes
-- [] Fix sloppy coding
-- [] General Housekeeping
-- [] Notify programs such as google-chrome that a file is moved and provide the new address
+- [ ] Add proper command line options
+- [ ] Add some more modes
+- [ ] Fix sloppy coding
+- [ ] General Housekeeping
+- [ ] Notify programs such as google-chrome that a file is moved and provide the new address
