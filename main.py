@@ -20,13 +20,19 @@ class EllieHandler(FileSystemEventHandler):
 
     def on_created(self, event):
         """on_created.
-
         :param event:
         """
         for move in self.movers:
             if move(event.src_path):
                 print("moved")
                 return True
+
+    def clean(self, directory):
+        for i in os.listdir(directory):
+            pathToFile = os.path.join(directory, i)
+            for move in self.movers:
+                if move(pathToFile):
+                    break
 
 
 def make_mover(folder, rules):
@@ -53,9 +59,10 @@ def main(watchpath):
             os.mkdir(path)
         FileExtensions[path] = FileExtensions.pop(i)
     movers = [make_mover(i, FileExtensions[i]) for i in FileExtensions]
-
+    handler = EllieHandler(movers)
+    handler.clean(watchpath)
     observer = Observer()
-    observer.schedule(EllieHandler(movers), watchpath)
+    observer.schedule(handler, watchpath)
     observer.start()
 
     try:
