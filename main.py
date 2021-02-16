@@ -37,16 +37,6 @@ class EllieHandler(FileSystemEventHandler):
                     break
 
 
-def make_mover(folder, rules):
-    """make_mover.
-
-    :param folder:
-    :param rules:
-    """
-    print(folder, rules)
-    return lambda x: os.rename(x, os.path.join(folder, os.path.basename(x))
-                               ) if os.path.splitext(x)[-1] in rules else False
-
 def loadconfig(filePath):
     rules = toml.load(filePath)
     a = rules.pop("mode").lower()
@@ -60,7 +50,6 @@ def loadconfig(filePath):
     ruleHandler = importlib.import_module(f"modes.{a}")
     print(rules)
     return [ruleHandler.make_mover(i, rules[i]) for i in rules]
-
 
 
 def main(watchpath):
