@@ -6,6 +6,8 @@ import time
 import os
 import toml
 import sys
+import re
+import importlib
 
 
 class EllieHandler(FileSystemEventHandler):
@@ -45,21 +47,29 @@ def make_mover(folder, rules):
     return lambda x: os.rename(x, os.path.join(folder, os.path.basename(x))
                                ) if os.path.splitext(x)[-1] in rules else False
 
+def loadconfig(filePath):
+    rules = toml.load(filePath)
+    a = rules.pop("mode").lower()
+    temp = rules.copy()
+    for i in temp:
+        path = os.path.join(os.path.split(filePath)[0], i)
+        print(path)
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        rules[path] = rules.pop(i)
+    ruleHandler = importlib.import_module(f"modes.{a}")
+    print(rules)
+    return [ruleHandler.make_mover(i, rules[i]) for i in rules]
+
+
 
 def main(watchpath):
     """main.
 
     :param watchpath:
     """
-    FileExtensions = toml.load(os.path.join(watchpath, "rules.toml"))
-    temp = FileExtensions.copy()
-    for i in temp:
-        path = os.path.join(watchpath, i)
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        FileExtensions[path] = FileExtensions.pop(i)
-    movers = [make_mover(i, FileExtensions[i]) for i in FileExtensions]
-    handler = EllieHandler(movers)
+    rules = loadconfig(os.path.join(watchpath,"rules.toml"))
+    handler = EllieHandler(rules)
     handler.clean(watchpath)
     observer = Observer()
     observer.schedule(handler, watchpath)
@@ -71,7 +81,6 @@ def main(watchpath):
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
-
 
 if __name__ == "__main__":
     main(sys.argv[1])
