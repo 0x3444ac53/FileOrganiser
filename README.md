@@ -14,14 +14,46 @@ $ source bin/activate
 $ pip install -r requirements.txt
 ```
 
+
+
+
+
 #### Usage 
 
-In the directory that you want organized create a `rule.toml` file. Here is an example file
+##### Command Line Options
+
+```
+usage: main.py [-h] [-r RULEFILE] [-d] watchpath
+
+positional arguments:
+  watchpath             The Directory to watch
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r RULEFILE, --rulefile RULEFILE
+                        specify config path
+  -d, --daemon          run as daemon
+
+```
+
+
+
+##### Rules and Modes
+
+In the directory that you want organised, create a `rule.toml` file, with the first line defining the 'mode' of the rules. Individual modes have different criteria for valid rules, but follow the same pattern:
+
+```
+"Directory to move file to" = SomeRule
+```
+
+###### Extension Mode
+
+The extension mode defines a list of file extensions. If newly created files have extensions that appear in that list, they are moved to the specified directory. Here is a standard example file:
 
 ```toml
 mode = "Extensions"
 
-Documents = [ ".pdf", ".doc", ".docx", ".html", ".epub", ".mobi",".rtf", ".txt", ".odt", ".md", ".tex", ".pptx", ".otf", ".odf"]
+Documents = [ ".pdf", ".doc", ".docx", ".html"]
 Pictures = [ ".jpeg", ".jpg", ".png", ".bmp", ".gif", ".svg"]
 Archives = [ ".zip", ".7zip", ".tar", ".bz", ".gz", ".xz", ".bz2"]
 Videos = ['.webm', '.mpg', '.mp2', '.mpeg', '.mpe', '.mpv', '.ogg', '.mp4']
@@ -29,7 +61,9 @@ ProgramFiles = [".py", ".jar", ".crx", ".cpp", ".run", ".so", ".deb"]
 DiskImages = [".iso"]
 ```
 
-The `mode` rule is mandatory (check the `modes` directory) and then the rules. Each rule is a Folder name and then a condition for any given file to be checked against. The Extension mode checks if a given file has an extension in the list. Currently the only other mode is for regex matching, and that config file looks like this
+###### Regex
+
+Self-explanatory. File gets moved to specified directory if it matches a pattern.
 
 ```toml
 mode = "regex"
@@ -39,49 +73,41 @@ Scans = "^Scan.*"
 "Case Study" = "^CS.*"
 ```
 
-After you create a rule file, point the script at that directory, i.e. 
+###### Script
 
-```
-$ main.py path/to/folder
+Script mode is complicated and should be used with caution. It's good for hacks and esoteric operations. First, create a `rule.toml` that looks like this:
+
+```toml
+mode = "script"
+aScript = '/absolute/path/to/script.py'
 ```
 
-It'll do a first pass, and you're welcome to leave it running and it will automatically move other files
+Then your script just needs to have a function called `main` that takes in a filename as an argument. In this example, if a file has a `.zip` extension, we extract it and then delete the zip file.
+
+```python
+import zipfile
+import os
+def main(file):
+    if not os.path.isdir(file) and file.split('.')[-1] == 'zip':
+        with zipfile.ZipFile(file, 'r') as zip_ref:
+            zip_ref.extractall('/path/to/folder')
+        os.remove(file)
+        return True
+    return False
+```
 
 #### Creating your own modes
 
-Each mode is a python file that contains at least one function called `make_mover` this function returns a function that will move a file if a condition is met. There is probably a better way to do this, but I'll figure that out late, for now feel free to template your files off of the regex and extension modes. 
-Regex:
+Each mode is a python file that contains at least one function called `make_mover`. This function returns a function that will move a file if a condition is met. [Take a look through the modes directory for inspiration](https://github.com/Lifesgood123/FileOrganiser/tree/master/modes) 
 
-```python
-import re
-import os 
+There is probably a better way to do this, but I'm stubborn.
 
-def make_mover(folder, pattern):
-    pattern = re.compile(pattern)
-    def tester(x):
-        if pattern.search(os.path.basename(x)) and not os.path.isdir(x):
-            os.rename(x, os.path.join(folder, os.path.basename(x)))
-        else:
-            return False
-        return True
-    return tester
 
-```
 
-Extension:
+Todo
 
-```python
-import os
-
-def make_mover(folder, rules):
-    return lambda x: os.rename(x, os.path.join(folder, os.path.basename(x))
-                               ) if os.path.splitext(x)[-1] in rules else False
-
-```
-
-### Todo
-- [ ] Add proper command line options
-- [ ] Add some more modes
+- [x] Add proper command line options
+- [x] Add some more modes
 - [ ] Fix sloppy coding
 - [ ] General Housekeeping
 - [ ] Notify programs such as google-chrome that a file is moved and provide the new address
