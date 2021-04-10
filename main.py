@@ -8,6 +8,7 @@ import toml
 import sys
 import re
 import importlib
+import argparse
 
 
 class EllieHandler(FileSystemEventHandler):
@@ -51,25 +52,35 @@ def loadconfig(filePath):
     print(rules)
     return [ruleHandler.make_mover(i, rules[i]) for i in rules]
 
+def parse_args():
+    p = argparse.ArgumentParser()
+    p.add_argument('watchpath',
+                   help='The Directory to watch')
+    p.add_argument('-r', "--rulefile",
+                   help="specify config path")
+    p.add_argument('-d', '--daemon', help="run as daemon",
+                   action='store_true')
+    return p.parse_args()
 
-def main(watchpath):
-    """main.
-
-    :param watchpath:
+def main():
+    """main
     """
+    args = parse_args()
+    print(args)
+    watchpath = args.watchpath
     rules = loadconfig(os.path.join(watchpath,"rules.toml"))
     handler = EllieHandler(rules)
     handler.clean(watchpath)
-    observer = Observer()
-    observer.schedule(handler, watchpath)
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(100)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+    if args.daemon:
+        observer = Observer()
+        observer.schedule(handler, watchpath)
+        observer.start()
+        try:
+            while True:
+                time.sleep(100)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main()
