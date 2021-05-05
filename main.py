@@ -68,7 +68,12 @@ def main():
     args = parse_args()
     print(args)
     watchpath = args.watchpath
-    rules = loadconfig(os.path.join(watchpath,"rules.toml"))
+    rules = [i for x in [loadconfig(os.path.join(args.watchpath, i)) for i in
+                    filter(lambda x : x[-4:] == "toml",
+                       filter(lambda x: x[:5] == "rules",
+                              os.listdir(args.watchpath)))] for i in
+             x]
+    print(rules)
     handler = EllieHandler(rules)
     handler.clean(watchpath)
     if args.daemon:
