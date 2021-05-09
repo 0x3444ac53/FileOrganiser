@@ -6,7 +6,7 @@ Given a set of rules, this program will organize a directory based on those rule
 
 #### Installation
 
-```
+```shell
 $ git clone https://github.com/Lifesgood123/FileOrganiser
 $ cd FileOrganiser
 $ python3 -m venv .
@@ -16,33 +16,27 @@ $ pip install -r requirements.txt
 
 
 
-
-
 #### Usage 
 
 ##### Command Line Options
 
-```
-usage: main.py [-h] [-r RULEFILE] [-d] watchpath
+```shell
+usage: main.py [-h] [-d] [-r] watchpath
 
 positional arguments:
-  watchpath             The Directory to watch
+  watchpath        The Directory to watch
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -r RULEFILE, --rulefile RULEFILE
-                        specify config path
-  -d, --daemon          run as daemon
-
+  -h, --help       show this help message and exit
+  -d, --daemon     run as daemon
+  -r, --recursive  Crawl down directories
 ```
-
-
 
 ##### Rules and Modes
 
 In the directory that you want organised, create a `rule.toml` file, with the first line defining the 'mode' of the rules. Individual modes have different criteria for valid rules, but follow the same pattern:
 
-```
+```toml
 "Directory to move file to" = SomeRule
 ```
 
