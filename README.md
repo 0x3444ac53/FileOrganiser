@@ -39,6 +39,7 @@ In the directory that you want organised, create a `rule.toml` file, with the fi
 ```toml
 "Directory to move file to" = SomeRule
 ```
+You can now have multiple rulefiles in a single directory, following the pattern `rules01.toml`, number them in order of importance
 
 ###### Extension Mode
 
