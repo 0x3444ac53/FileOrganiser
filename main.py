@@ -42,14 +42,13 @@ class EllieHandler(FileSystemEventHandler):
 
 def loadconfig(filePath):
     rules = toml.load(filePath)
-    a = rules.pop("mode").lower()
-    temp = rules.copy()
-    for i in temp:
+    mode = rules.pop("mode").lower()
+    for i in rules:
         path = os.path.join(os.path.split(filePath)[0], i)
         if not os.path.isdir(path):
             os.mkdir(path)
         rules[path] = rules.pop(i)
-    ruleHandler = importlib.import_module(f"modes.{a}")
+    ruleHandler = importlib.import_module(f"modes.{mode}")
     print(rules)
     return [ruleHandler.make_mover(i, rules[i]) for i in rules]
 
@@ -58,22 +57,22 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('watchpath', help='The Directory to watch')
     p.add_argument('-d', '--daemon', help="run as daemon", action='store_true')
-    p.add_argument('-r', '--recursive', help="Crawl down directories",
+    p.add_argument('-r',
+                   '--recursive',
+                   help="Crawl down directories",
                    action='store_true')
     return p.parse_args()
 
 
-def recursiveHandler(path, pattern, FirstPass=True):
+def recursiveHandler(path, pattern):
     watchpaths = []
     for root, dirs, files in os.walk(path):
-        if len(list(filter(pattern.match, files))) != 0:
+        if any(pattern.match(file) for file in files):
             watchpaths.append(root)
     return watchpaths
 
 
-def main(rootwatchpath, daemon, recursive=False):
-    """main
-    """
+def clean(rootwatchpath, daemon, recursive=False):
     watchpaths = []
     watchedDirs = []
     watchpaths.append(rootwatchpath)
@@ -82,6 +81,7 @@ def main(rootwatchpath, daemon, recursive=False):
         watchpaths = recursiveHandler(rootwatchpath, pat)
     print(watchpaths)
     for watchpath in watchpaths:
+        # Flattens the list
         rules = [
             i for x in [
                 loadconfig(os.path.join(watchpath, i)) for i in filter(
@@ -96,17 +96,15 @@ def main(rootwatchpath, daemon, recursive=False):
             watchedDirs.append(Observer())
             watchedDirs[-1].schedule(handler, watchpath)
             watchedDirs[-1].start()
-    try:
-        while True:
-            time.sleep(100)
-    except KeyboardInterrupt:
-        for observer in watchedDirs:
-            observer.stop()
-            observer.join()
+            try:
+                while True:
+                    time.sleep(100)
+            except KeyboardInterrupt:
+                for observer in watchedDirs:
+                    observer.stop()
+                    observer.join()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.watchpath,
-         args.daemon,
-         recursive=args.recursive)
+    clean(args.watchpath, args.daemon, recursive=args.recursive)
