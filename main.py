@@ -42,15 +42,18 @@ class EllieHandler(FileSystemEventHandler):
 
 def loadconfig(filePath):
     rules = toml.load(filePath)
+    absolute_path_rules = dict()
     mode = rules.pop("mode").lower()
     for i in rules:
+        print(i)
         path = os.path.join(os.path.split(filePath)[0], i)
         if not os.path.isdir(path):
             os.mkdir(path)
-        rules[path] = rules.pop(i)
+        absolute_path_rules[path] = rules[i]
     ruleHandler = importlib.import_module(f"modes.{mode}")
-    print(rules)
-    return [ruleHandler.make_mover(i, rules[i]) for i in rules]
+    print(absolute_path_rules)
+    return [ruleHandler.make_mover(i, absolute_path_rules[i]) for i in
+            absolute_path_rules]
 
 
 def parse_args():
