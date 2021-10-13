@@ -37,7 +37,7 @@ optional arguments:
 In the directory that you want organised, create a `rule.toml` file, with the first line defining the 'mode' of the rules. Individual modes have different criteria for valid rules, but follow the same pattern:
 
 ```toml
-"Directory to move file to" = SomeRule
+DirectoryToMoveFileTo = SomeRule
 ```
 You can now have multiple rulefiles in a single directory, following the pattern `rules01.toml`, number them in order of importance
 
