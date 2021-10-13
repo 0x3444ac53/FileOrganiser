@@ -5,11 +5,7 @@ from watchdog.events import FileSystemEventHandler, FileCreatedEvent
 import time
 import os
 import toml
-import sys
-import re
 import importlib
-import argparse
-from multiprocessing import Pool
 import re
 
 
@@ -32,7 +28,7 @@ class EllieHandler(FileSystemEventHandler):
                 return True
 
     def on_modified(self, event):
-        print(event.__str__())
+        print(event)
 
     def clean(self, directory):
         for i in os.listdir(directory):
@@ -45,33 +41,19 @@ class EllieHandler(FileSystemEventHandler):
 def loadconfig(filePath):
     rules = toml.load(filePath)
     absolute_path_rules = dict()
-    mode = rules.pop("mode").lower()
     try:
-        opts = rules.pop("options")
+        mode = rules.pop("mode").lower()
     except KeyError:
-        opts = dict()
-    for i in rules:
-        print(i)
-        path = os.path.join(os.path.split(filePath)[0], i)
+        print(f"No mode specified {filePath}")
+        exit(1)
+    for rule in rules:
+        path = os.path.join(os.path.split(filePath)[0], rule)
         if not os.path.isdir(path):
             os.mkdir(path)
-        absolute_path_rules[path] = rules[i]
+        absolute_path_rules[path] = rules[rule]
     ruleHandler = importlib.import_module(f"modes.{mode}")
-    print(absolute_path_rules)
     return [ruleHandler.make_mover(i, absolute_path_rules[i]) for i in
             absolute_path_rules]
-
-
-def parse_args():
-    p = argparse.ArgumentParser()
-    p.add_argument('watchpath', help='The Directory to watch')
-    p.add_argument('-d', '--daemon', help="run as daemon", action='store_true')
-    p.add_argument('-r',
-                   '--recursive',
-                   help="Crawl down directories",
-                   action='store_true')
-    return p.parse_args()
-
 
 def recursiveHandler(path, pattern):
     watchpaths = []
@@ -79,7 +61,6 @@ def recursiveHandler(path, pattern):
         if any(pattern.match(file) for file in files):
             watchpaths.append(root)
     return watchpaths
-
 
 def clean(rootwatchpath, daemon, recursive=False):
     watchpaths = []
@@ -90,14 +71,11 @@ def clean(rootwatchpath, daemon, recursive=False):
         watchpaths = recursiveHandler(rootwatchpath, pat)
     print(watchpaths)
     for watchpath in watchpaths:
-        # Flattens the list
-        rules = [
-            i for x in [
-                loadconfig(os.path.join(watchpath, i)) for i in filter(
-                    lambda x: x[-4:] == "toml",
-                    filter(lambda x: x[:5] == "rules", os.listdir(watchpath)))
-            ] for i in x
-        ]
+        print(f"{watchpath=}")
+        rules = [loadconfig(os.path.join(watchpath, i)) for i in
+                os.listdir(watchpath) if pat.match(i)][::-1]
+        # flatten the list 
+        rules = [item for sublist in rules for item in sublist]
         print(rules)
         handler = EllieHandler(rules)
         handler.clean(watchpath)
@@ -105,23 +83,14 @@ def clean(rootwatchpath, daemon, recursive=False):
             watchedDirs.append(Observer())
             watchedDirs[-1].schedule(handler, watchpath)
             watchedDirs[-1].start()
-    try:
-        while True:
-            time.sleep(100)
-    except KeyboardInterrupt:
-        for observer in watchedDirs:
-            observer.stop()
-            observer.join()
+    if daemon:
+        try:
+            while True:
+                time.sleep(100)
+        except KeyboardInterrupt:
+            for observer in watchedDirs:
+                observer.stop()
+                observer.join()
 
 
-if __name__ == "__main__":
-    import cProfile, pstats
-
-    with cProfile.Profile() as pr:
-        args = parse_args()
-        clean(args.watchpath, args.daemon, recursive=args.recursive)
-    
-    stats = pstats.Stats(pr)
-    stats.sort_stats(pstats.SortKey.TIME)
-    stats.dump_stats("fileOrg.profile")
 
