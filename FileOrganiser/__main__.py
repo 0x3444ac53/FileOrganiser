@@ -1,4 +1,4 @@
-import FileOrganiser
+from FileOrganiser import FileOrganiser
 import cProfile, pstats
 import argparse
 from time import sleep
