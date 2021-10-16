@@ -16,7 +16,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    fileorg = FileOrganiser(watchpath, recursive=args.recursive)
+    fileorg = FileOrganiser(args.watchpath, recursive=args.recursive)
     if args.log:
         with cProfile.Profile() as pr:
             fileorg.start()
