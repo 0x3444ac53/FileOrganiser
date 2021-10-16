@@ -85,7 +85,7 @@ class FileOrganiser:
             if not os.path.isdir(path):
                 os.mkdir(path)
             absolute_path_rules[path] = rules[rule]
-        ruleHandler = importlib.import_module(f"modes.{mode}")
+        ruleHandler = importlib.import_module(f"FileOrganiser.modes.{mode}")
         return [ruleHandler.make_mover(i, absolute_path_rules[i]) for i in
                 absolute_path_rules]
 
