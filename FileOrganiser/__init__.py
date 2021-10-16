@@ -1,3 +1,3 @@
-from fileorganiser import FileOrganiser, EllieHandler
+from FileOrganiser.fileorganiser import FileOrganiser, EllieHandler
 
 
