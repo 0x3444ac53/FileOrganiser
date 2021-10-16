@@ -37,60 +37,64 @@ class EllieHandler(FileSystemEventHandler):
                 if move(pathToFile):
                     break
 
+class FileOrganiser:
+    def __init__(self, rootwatchpath, recursive=False):
+        self.rootwatchpath = rootwatchpath
+        self.recursive = recursive
+        self.watchedDirs = []
+        watchpaths = []
+        watchpaths.append(rootwatchpath)
+        self.handlers = dict()
+        pat = re.compile("rules\d*.toml")
+        if recursive:
+            watchpaths = self.recursiveHandler(rootwatchpath, pat)
+        print(watchpaths)
+        for watchpath in watchpaths:
+            print(f"{watchpath=}")
+            rules = [self.loadconfig(os.path.join(watchpath, i)) for i in
+                    os.listdir(watchpath) if pat.match(i)][::-1]
+            # flatten the list 
+            rules = [item for sublist in rules for item in sublist]
+            print(rules)
+            self.handlers[watchpath] = EllieHandler(rules)
+            self.watchedDirs.append(Observer())
+            self.watchedDirs[-1].schedule(self.handlers[watchpath], watchpath)
+    
+    def clean(self):
+        for directory in self.handlers.keys():
+            self.handlers[directory].clean(directory)
 
-def loadconfig(filePath):
-    rules = toml.load(filePath)
-    absolute_path_rules = dict()
-    try:
-        mode = rules.pop("mode").lower()
-    except KeyError:
-        print(f"No mode specified {filePath}")
-        exit(1)
-    for rule in rules:
-        path = os.path.join(os.path.split(filePath)[0], rule)
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        absolute_path_rules[path] = rules[rule]
-    ruleHandler = importlib.import_module(f"modes.{mode}")
-    return [ruleHandler.make_mover(i, absolute_path_rules[i]) for i in
-            absolute_path_rules]
+    def start(self):
+        for observer in self.watchedDirs:
+            observer.start()
 
-def recursiveHandler(path, pattern):
-    watchpaths = []
-    for root, dirs, files in os.walk(path):
-        if any(pattern.match(file) for file in files):
-            watchpaths.append(root)
-    return watchpaths
+    def stop(self):
+        for observer in self.watchedDirs:
+            observer.stop()
+            observer.join()
 
-def clean(rootwatchpath, daemon, recursive=False):
-    watchpaths = []
-    watchedDirs = []
-    watchpaths.append(rootwatchpath)
-    pat = re.compile("rules\d*.toml")
-    if recursive:
-        watchpaths = recursiveHandler(rootwatchpath, pat)
-    print(watchpaths)
-    for watchpath in watchpaths:
-        print(f"{watchpath=}")
-        rules = [loadconfig(os.path.join(watchpath, i)) for i in
-                os.listdir(watchpath) if pat.match(i)][::-1]
-        # flatten the list 
-        rules = [item for sublist in rules for item in sublist]
-        print(rules)
-        handler = EllieHandler(rules)
-        handler.clean(watchpath)
-        if daemon:
-            watchedDirs.append(Observer())
-            watchedDirs[-1].schedule(handler, watchpath)
-            watchedDirs[-1].start()
-    if daemon:
+    def loadconfig(self, filePath):
+        rules = toml.load(filePath)
+        absolute_path_rules = dict()
         try:
-            while True:
-                time.sleep(100)
-        except KeyboardInterrupt:
-            for observer in watchedDirs:
-                observer.stop()
-                observer.join()
+            mode = rules.pop("mode").lower()
+        except KeyError:
+            print(f"No mode specified {filePath}")
+            exit(1)
+        for rule in rules:
+            path = os.path.join(os.path.split(filePath)[0], rule)
+            if not os.path.isdir(path):
+                os.mkdir(path)
+            absolute_path_rules[path] = rules[rule]
+        ruleHandler = importlib.import_module(f"modes.{mode}")
+        return [ruleHandler.make_mover(i, absolute_path_rules[i]) for i in
+                absolute_path_rules]
 
+    def recursiveHandler(self, path, pattern):
+        watchpaths = []
+        for root, dirs, files in os.walk(path):
+            if any(pattern.match(file) for file in files):
+                watchpaths.append(root)
+        return watchpaths
 
-
+    
