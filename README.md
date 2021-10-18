@@ -85,12 +85,6 @@ def main(file):
     return False
 ```
 
-#### Creating your own modes
-
-Each mode is a python file that contains at least one function called `make_mover`. This function returns a function that will move a file if a condition is met. [Take a look through the modes directory for inspiration](https://github.com/Lifesgood123/FileOrganiser/tree/master/modes) 
-
-There is probably a better way to do this, but I'm stubborn.
-
 
 
 #### Todo
