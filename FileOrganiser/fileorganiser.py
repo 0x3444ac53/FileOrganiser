@@ -49,7 +49,7 @@ class FileOrganiser:
             watchpaths = self.recursiveHandler(rootwatchpath, pat)
         print(watchpaths)
         for watchpath in watchpaths:
-            print(f"{watchpath=}")
+            print("watchpath = {}".format(watchpath)
             rules = [self.loadconfig(os.path.join(watchpath, i)) for i in
                     os.listdir(watchpath) if pat.match(i)][::-1]
             # flatten the list 
