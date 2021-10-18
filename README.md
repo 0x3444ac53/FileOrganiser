@@ -7,14 +7,8 @@ Given a set of rules, this program will organize a directory based on those rule
 #### Installation
 
 ```shell
-$ git clone https://github.com/Lifesgood123/FileOrganiser
-$ cd FileOrganiser
-$ python3 -m venv .
-$ source bin/activate
-$ pip install -r requirements.txt
+$ pip3 install FileOrganiser
 ```
-
-
 
 #### Usage 
 
@@ -99,10 +93,6 @@ There is probably a better way to do this, but I'm stubborn.
 
 
 
-Todo
+#### Todo
 
-- [x] Add proper command line options
-- [x] Add some more modes
-- [ ] Fix sloppy coding
-- [ ] General Housekeeping
-- [ ] Notify programs such as google-chrome that a file is moved and provide the new address
+- [ ] Add directory for custom modes in ~/.config
