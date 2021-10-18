@@ -1,0 +1,5 @@
+mode = "Extensions"
+
+PDFS = [ ".pdf"]
+docs = [".docx", ".doc"]
+books = [".mobi", ".epub", ".djvu"]

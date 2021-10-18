@@ -1,0 +1,4 @@
+mode = "Regex"
+
+Labs = 'Lab[-]?\d(Fall)?\d*(Answer)?.pdf'
+Phi310 = '^PHI[_ ]?310.*'
