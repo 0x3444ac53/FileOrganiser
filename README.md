@@ -15,7 +15,7 @@ $ pip3 install FileOrganiser
 ##### Command Line Options
 
 ```shell
-usage: main.py [-h] [-d] [-r] watchpath
+usage: python3 -m fileOrganiser [-h] [-d] [-r] watchpath
 
 positional arguments:
   watchpath        The Directory to watch
